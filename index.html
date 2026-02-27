@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Status Card</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .server-card {
+            background: linear-gradient(145deg, #2a2a3a 0%, #1a1a2e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 
+                        inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .server-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #ff006e);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .server-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            background: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .server-icon img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .server-title {
+            flex: 1;
+        }
+
+        .server-name {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .server-address {
+            color: #00d4ff;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,212,255,0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-online {
+            background: rgba(0,255,136,0.15);
+            color: #00ff88;
+            border: 1px solid rgba(0,255,136,0.3);
+        }
+
+        .status-offline {
+            background: rgba(255,0,85,0.15);
+            color: #ff0055;
+            border: 1px solid rgba(255,0,85,0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online .status-dot {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .status-offline .status-dot {
+            background: #ff0055;
+            box-shadow: 0 0 10px #ff0055;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .motd-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #7b2cbf;
+            font-family: 'Minecraft', 'Courier New', monospace;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .info-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .players-bar {
+            background: rgba(0,0,0,0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        .players-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+
+        .version-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .latency-good { color: #00ff88; }
+        .latency-medium { color: #ffaa00; }
+        .latency-bad { color: #ff0055; }
+
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #ff0055;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #00d4ff;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0,212,255,0.3);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #00d4ff;
+            background: rgba(255,255,255,0.15);
+        }
+
+        button {
+            background: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .usage-hint {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .usage-hint code {
+            background: rgba(0,212,255,0.1);
+            color: #00d4ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="server-card" id="card">
+    <div class="input-section" id="inputSection">
+        <h2 style="color: #fff; margin-bottom: 20px;">🔍 Minecraft 服务器状态查询</h2>
+        <div class="input-group">
+            <input type="text" id="serverInput" placeholder="输入服务器地址 (如: mc.hypixel.net)" 
+                   onkeypress="if(event.key==='Enter')checkServer()">
+            <button onclick="checkServer()">查询</button>
+        </div>
+        <p style="color: #666; margin-top: 15px; font-size: 14px;">
+            支持 Java 版服务器，自动识别默认端口 25565
+        </p>
+    </div>
+
+    <div id="content">
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>正在连接服务器...</div>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <div class="usage-hint" id="usageHint">
+        💡 提示：直接访问 <code>?host=服务器地址</code> 可快速查看状态
+    </div>
+</div>
+
+<script>
+    // 解析 URL 参数
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // 解析 MOTD 颜色代码
+    function parseMOTD(motd) {
+        if (!motd) return '暂无描述';
+        
+        // 如果是对象（新格式），提取 text
+        if (typeof motd === 'object') {
+            return extractTextFromMOTD(motd);
+        }
+        
+        // 处理字符串中的颜色代码 §
+        let html = motd
+            .replace(/§0/g, '<span style="color:#000000">').replace(/§1/g, '<span style="color:#0000AA">')
+            .replace(/§2/g, '<span style="color:#00AA00">').replace(/§3/g, '<span style="color:#00AAAA">')
+            .replace(/§4/g, '<span style="color:#AA0000">').replace(/§5/g, '<span style="color:#AA00AA">')
+            .replace(/§6/g, '<span style="color:#FFAA00">').replace(/§7/g, '<span style="color:#AAAAAA">')
+            .replace(/§8/g, '<span style="color:#555555">').replace(/§9/g, '<span style="color:#5555FF">')
+            .replace(/§a/g, '<span style="color:#55FF55">').replace(/§b/g, '<span style="color:#55FFFF">')
+            .replace(/§c/g, '<span style="color:#FF5555">').replace(/§d/g, '<span style="color:#FF55FF">')
+            .replace(/§e/g, '<span style="color:#FFFF55">').replace(/§f/g, '<span style="color:#FFFFFF">')
+            .replace(/§l/g, '<span style="font-weight:bold">').replace(/§m/g, '<span style="text-decoration:line-through">')
+            .replace(/§n/g, '<span style="text-decoration:underline">').replace(/§o/g, '<span style="font-style:italic">')
+            .replace(/§r/g, '</span>')
+            .replace(/\n/g, '<br>');
+        
+        // 关闭未闭合的标签
+        const openTags = (html.match(/<span/g) || []).length;
+        const closeTags = (html.match(/<\/span>/g) || []).length;
+        for (let i = 0; i < openTags - closeTags; i++) {
+            html += '</span>';
+        }
+        
+        return html;
+    }
+
+    function extractTextFromMOTD(obj) {
+        let text = '';
+        if (obj.text) text += obj.text;
+        if (obj.extra) {
+            obj.extra.forEach(item => {
+                text += extractTextFromMOTD(item);
+            });
+        }
+        return text || '暂无描述';
+    }
+
+    // 获取延迟颜色
+    function getLatencyColor(latency) {
+        if (latency < 100) return 'latency-good';
+        if (latency < 200) return 'latency-medium';
+        return 'latency-bad';
+    }
+
+    // 查询服务器
+    async function checkServer(ip) {
+        const serverIP = ip || document.getElementById('serverInput').value.trim();
+        if (!serverIP) {
+            alert('请输入服务器地址');
+            return;
+        }
+
+        // 隐藏输入区域，显示加载
+        if (!ip) {
+            document.getElementById('inputSection').style.display = 'none';
+            document.getElementById('usageHint').style.display = 'none';
+        }
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('result').innerHTML = '';
+
+        try {
+            // 使用 mcstatus.io API（支持 CORS）
+            const response = await fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`);
+            const data = await response.json();
+
+            if (!data.online) {
+                throw new Error('服务器离线或无法连接');
+            }
+
+            renderServerCard(data, serverIP);
+        } catch (error) {
+            renderError(error.message, serverIP);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    // 渲染服务器卡片
+    function renderServerCard(data, ip) {
+        const playersPercent = data.players.max > 0 ? (data.players.online / data.players.max * 100) : 0;
+        const latencyClass = getLatencyColor(data.latency || 0);
+        
+        let iconHtml = '🎮';
+        if (data.icon) {
+            iconHtml = `<img src="${data.icon}" alt="icon">`;
+        }
+
+        const html = `
+            <div class="header">
+                <div class="server-icon">${iconHtml}</div>
+                <div class="server-title">
+                    <div class="server-name">${data.motd?.clean?.split('\n')[0] || 'Minecraft Server'}</div>
+                    <div class="server-address">${ip}</div>
+                </div>
+                <div class="status-badge status-online">
+                    <span class="status-dot"></span>
+                    在线
+                </div>
+            </div>
+
+            <div class="motd-box">
+                ${parseMOTD(data.motd?.raw || data.motd?.clean || '')}
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">在线玩家</div>
+                    <div class="info-value">${data.players.online} / ${data.players.max}</div>
+                    <div class="players-bar">
+                        <div class="players-fill" style="width: ${playersPercent}%"></div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">延迟</div>
+                    <div class="info-value ${latencyClass}">${data.latency || '--'} ms</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">游戏版本</div>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="color: #fff; font-weight: 600;">${data.version?.name_clean || '未知'}</span>
+                        <span class="version-tag">协议 ${data.version?.protocol || '--'}</span>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Forge/MOD</div>
+                    <div class="info-value" style="font-size: 14px;">
+                        ${data.mods ? `${data.mods.length} 个 MOD` : '无'}
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="resetSearch()" style="background: rgba(255,255,255,0.1); font-size: 14px; padding: 8px 20px;">
+                    ← 查询其他服务器
+                </button>
+            </div>
+        `;
+
+        document.getElementById('result').innerHTML = html;
+    }
+
+    // 渲染错误状态
+    function renderError(message, ip) {
+        const html = `
+            <div class="header">
+                <div class="server-icon" style="font-size: 40px;">❌</div>
+                <div class="server-title">
+                    <div class="server-name" style="color: #ff0055;">连接失败</div>
+                    <div class="server-address">${ip}</div>
+                </div>
+                <div class="status-badge status-offline">
+                    <span class="status-dot"></span>
+                    离线
+                </div>
+            </div>
+            
+            <div class="error-message">
+                <p style="font-size: 18px; margin-bottom: 10px;">无法连接到服务器</p>
+                <p style="color: #888; font-size: 14px;">${message}</p>
+                <p style="color: #666; font-size: 12px; margin-top: 15px;">
+                    请检查：<br>
+                    • 服务器地址是否正确<br>
+                    • 服务器是否在线<br>
+                    • 是否为 Java 版服务器
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="resetSearch()" style="background: rgba(255,255,255,0.1); font-size: 14px; padding: 8px 20px;">
+                    ← 返回
+                </button>
+            </div>
+        `;
+        document.getElementById('result').innerHTML = html;
+    }
+
+    // 重置搜索
+    function resetSearch() {
+        document.getElementById('inputSection').style.display = 'block';
+        document.getElementById('usageHint').style.display = 'block';
+        document.getElementById('result').innerHTML = '';
+        document.getElementById('serverInput').value = '';
+        // 清除 URL 参数
+        if (window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // 页面加载时检查 URL 参数
+    window.onload = function() {
+        const host = getQueryParam('host');
+        if (host) {
+            document.getElementById('serverInput').value = host;
+            checkServer(host);
+        }
+    };
+</script>
+
+</body>
+</html>
